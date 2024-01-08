@@ -1,0 +1,236 @@
+CREATE DATABASE insurance_v;
+USE insurance_v;
+
+CREATE TABLE IF NOT EXISTS person (
+driver_id VARCHAR(255) NOT NULL,
+driver_name TEXT NOT NULL,
+address TEXT NOT NULL,
+PRIMARY KEY (driver_id)
+);
+
+CREATE TABLE IF NOT EXISTS car (
+reg_no VARCHAR(255) NOT NULL,
+model TEXT NOT NULL,
+c_year INTEGER,
+PRIMARY KEY (reg_no)
+);
+
+CREATE TABLE IF NOT EXISTS accident (
+report_no INTEGER NOT NULL,
+accident_date DATE,
+location TEXT,
+PRIMARY KEY (report_no)
+);
+
+CREATE TABLE IF NOT EXISTS owns (
+driver_id VARCHAR(255) NOT NULL,
+reg_no VARCHAR(255) NOT NULL,
+FOREIGN KEY (driver_id) REFERENCES person(driver_id) ON DELETE CASCADE,
+FOREIGN KEY (reg_no) REFERENCES car(reg_no) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS participated (
+driver_id VARCHAR(255) NOT NULL,
+reg_no VARCHAR(255) NOT NULL,
+report_no INTEGER NOT NULL,
+damage_amount FLOAT NOT NULL,
+FOREIGN KEY (driver_id) REFERENCES person(driver_id) ON DELETE CASCADE,
+FOREIGN KEY (reg_no) REFERENCES car(reg_no) ON DELETE CASCADE,
+FOREIGN KEY (report_no) REFERENCES accident(report_no)
+);
+
+INSERT INTO person VALUES
+("D111", "Driver_1", "Kuvempunagar, Mysuru"),
+("D222", "Smith", "JP Nagar, Mysuru"),
+("D333", "Driver_3", "Udaygiri, Mysuru"),
+("D444", "Driver_4", "Rajivnagar, Mysuru"),
+("D555", "Driver_5", "Vijayanagar, Mysore");
+
+INSERT INTO car VALUES
+("KA-20-AB-4223", "Swift", 2020),
+("KA-20-BC-5674", "Mazda", 2017),
+("KA-21-AC-5473", "Alto", 2015),
+("KA-21-BD-4728", "Triber", 2019),
+("KA-09-MA-1234", "Tiago", 2018);
+
+INSERT INTO accident VALUES
+(43627, "2020-04-05", "Nazarbad, Mysuru"),
+(56345, "2019-12-16", "Gokulam, Mysuru"),
+(63744, "2020-05-14", "Vijaynagar, Mysuru"),
+(54634, "2019-08-30", "Kuvempunagar, Mysuru"),
+(65738, "2021-01-21", "JSS Layout, Mysuru"),
+(66666, "2021-01-21", "JSS Layout, Mysuru");
+
+INSERT INTO owns VALUES
+("D111", "KA-20-AB-4223"),
+("D222", "KA-20-BC-5674"),
+("D333", "KA-21-AC-5473"),
+("D444", "KA-21-BD-4728"),
+("D222", "KA-09-MA-1234");
+
+INSERT INTO participated VALUES
+("D111", "KA-20-AB-4223", 43627, 20000),
+("D222", "KA-20-BC-5674", 56345, 49500),
+("D333", "KA-21-AC-5473", 63744, 15000),
+("D444", "KA-21-BD-4728", 54634, 5000),
+("D222", "KA-09-MA-1234", 65738, 25000);
+
+SELECT * FROM person;
++-----------+-------------+----------------------+
+| driver_id | driver_name | address              |
++-----------+-------------+----------------------+
+| D111      | Driver_1    | Kuvempunagar, Mysuru |
+| D222      | Smith       | JP Nagar, Mysuru     |
+| D333      | Driver_3    | Udaygiri, Mysuru     |
+| D444      | Driver_4    | Rajivnagar, Mysuru   |
+| D555      | Driver_5    | Vijayanagar, Mysore  |
++-----------+-------------+----------------------+
+
+SELECT * FROM car;
++---------------+--------+--------+
+| reg_no        | model  | c_year |
++---------------+--------+--------+
+| KA-09-MA-1234 | Tiago  |   2018 |
+| KA-20-AB-4223 | Swift  |   2020 |
+| KA-20-BC-5674 | Mazda  |   2017 |
+| KA-21-AC-5473 | Alto   |   2015 |
+| KA-21-BD-4728 | Triber |   2019 |
++---------------+--------+--------+
+
+SELECT * FROM accident;
++-----------+---------------+----------------------+
+| report_no | accident_date | location             |
++-----------+---------------+----------------------+
+|     43627 | 2020-04-05    | Nazarbad, Mysuru     |
+|     54634 | 2019-08-30    | Kuvempunagar, Mysuru |
+|     56345 | 2019-12-16    | Gokulam, Mysuru      |
+|     63744 | 2020-05-14    | Vijaynagar, Mysuru   |
+|     65738 | 2021-01-21    | JSS Layout, Mysuru   |
+|     66666 | 2021-01-21    | JSS Layout, Mysuru   |
++-----------+---------------+----------------------+
+
+SELECT * FROM owns;
++-----------+---------------+
+| driver_id | reg_no        |
++-----------+---------------+
+| D111      | KA-20-AB-4223 |
+| D222      | KA-20-BC-5674 |
+| D333      | KA-21-AC-5473 |
+| D444      | KA-21-BD-4728 |
+| D222      | KA-09-MA-1234 |
++-----------+---------------+
+
+SELECT * FROM participated;
++-----------+---------------+-----------+---------------+
+| driver_id | reg_no        | report_no | damage_amount |
++-----------+---------------+-----------+---------------+
+| D111      | KA-20-AB-4223 |     43627 |         20000 |
+| D222      | KA-20-BC-5674 |     56345 |         49500 |
+| D333      | KA-21-AC-5473 |     63744 |         15000 |
+| D444      | KA-21-BD-4728 |     54634 |          5000 |
+| D222      | KA-09-MA-1234 |     65738 |         25000 |
++-----------+---------------+-----------+---------------+
+
+select COUNT(driver_id)
+from participated p, accident a
+where p.report_no=a.report_no and a.accident_date like "2021%";
++------------------+
+| COUNT(driver_id) |
++------------------+
+|                1 |
++------------------+
+
+select COUNT(distinct a.report_no)
+from accident a
+where exists 
+(select * from person p, participated ptd where p.driver_id=ptd.driver_id and p.driver_name="Smith" and a.report_no=ptd.report_no);
++-----------------------------+
+| COUNT(distinct a.report_no) |
++-----------------------------+
+|                           2 |
++-----------------------------+
+
+insert into accident values
+(45562, "2024-04-05", "Mandya");
+select * from accident;
++-----------+---------------+----------------------+
+| report_no | accident_date | location             |
++-----------+---------------+----------------------+
+|     43627 | 2020-04-05    | Nazarbad, Mysuru     |
+|     45562 | 2024-04-05    | Mandya               |
+|     54634 | 2019-08-30    | Kuvempunagar, Mysuru |
+|     56345 | 2019-12-16    | Gokulam, Mysuru      |
+|     63744 | 2020-05-14    | Vijaynagar, Mysuru   |
+|     65738 | 2021-01-21    | JSS Layout, Mysuru   |
+|     66666 | 2021-01-21    | JSS Layout, Mysuru   |
++-----------+---------------+----------------------+
+
+
+insert into participated values
+("D222", "KA-21-BD-4728", 45562, 50000);
+select * from participated;
++-----------+---------------+-----------+---------------+
+| driver_id | reg_no        | report_no | damage_amount |
++-----------+---------------+-----------+---------------+
+| D111      | KA-20-AB-4223 |     43627 |         20000 |
+| D333      | KA-21-AC-5473 |     63744 |         15000 |
+| D444      | KA-21-BD-4728 |     54634 |          5000 |
+| D222      | KA-09-MA-1234 |     65738 |         25000 |
+| D222      | KA-21-BD-4728 |     45562 |         50000 |
++-----------+---------------+-----------+---------------+
+
+delete from car
+where model="Mazda" and reg_no in
+(select car.reg_no from person p, owns o where p.driver_id=o.driver_id and o.reg_no=car.reg_no and p.driver_name="Smith");
+select * from car;
++---------------+--------+--------+
+| reg_no        | model  | c_year |
++---------------+--------+--------+
+| KA-09-MA-1234 | Tiago  |   2018 |
+| KA-20-AB-4223 | Swift  |   2020 |
+| KA-21-AC-5473 | Alto   |   2015 |
+| KA-21-BD-4728 | Triber |   2019 |
++---------------+--------+--------+
+
+update participated set damage_amount=10000 where report_no=65738 and reg_no="KA-09-MA-1234";
+select * from participated;
++-----------+---------------+-----------+---------------+
+| driver_id | reg_no        | report_no | damage_amount |
++-----------+---------------+-----------+---------------+
+| D111      | KA-20-AB-4223 |     43627 |         20000 |
+| D333      | KA-21-AC-5473 |     63744 |         15000 |
+| D444      | KA-21-BD-4728 |     54634 |          5000 |
+| D222      | KA-09-MA-1234 |     65738 |         10000 |
+| D222      | KA-21-BD-4728 |     45562 |         50000 |
++-----------+---------------+-----------+---------------+
+
+create view CarsInAccident as
+select distinct model, c_year
+from car c, participated p
+where c.reg_no=p.reg_no;
+
+select * from CarsInAccident;
++--------+--------+
+| model  | c_year |
++--------+--------+
+| Tiago  |   2018 |
+| Swift  |   2020 |
+| Alto   |   2015 |
+| Triber |   2019 |
++--------+--------+
+
+DELIMITER //
+create trigger Preventparticipations123
+before insert on participated
+for each row
+BEGIN
+	IF 3<=(select count(*) from participated where driver_id=new.driver_id) THEN
+		signal sqlstate '45000' set message_text='Driver has already participated in 3 accidents';
+	END IF;
+END;//
+DELIMITER ;
+INSERT INTO participated VALUES
+("D223", "KA-20-AB-4223", 66666, 20000);
+ERROR 1644 (45000): Driver has already participated in 2 accidents
+
+
